@@ -1,0 +1,26 @@
+[
+  {
+    nom: "Premium",
+    nbSouscriptions: 45,
+    ca: 225000, // chiffre d'affaires en XOF
+    fraisLivraison: 15000,
+    nbCommandes: 120,
+    nbParraines: 8
+  },
+  {
+    nom: "Standard",
+    nbSouscriptions: 35,
+    ca: 140000,
+    fraisLivraison: 12000,
+    nbCommandes: 90,
+    nbParraines: 5
+  },
+  {
+    nom: "Basic",
+    nbSouscriptions: 20,
+    ca: 60000,
+    fraisLivraison: 6000,
+    nbCommandes: 40,
+    nbParraines: 2
+  }
+]
