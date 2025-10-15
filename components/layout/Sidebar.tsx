@@ -24,7 +24,7 @@ const Sidebar: React.FC = () => {
 
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://168.231.101.119:5000/users");
+        const res = await fetch("http://148.230.85.247:7000/users");
         const data: number[] = await res.json();
         setSenders(data);
       } catch (err) {
@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
 
     const fetchLabels = async () => {
       try {
-        const res = await fetch("http://168.231.101.119:5000/labels");
+        const res = await fetch("http://148.230.85.247:7000/labels");
         const data = await res.json();
         setLabels(data);
       } catch (err) {
@@ -72,7 +72,7 @@ const Sidebar: React.FC = () => {
   const handleCreateLabel = async () => {
     if (!newLabel.trim()) return;
     try {
-      const res = await fetch("http://168.231.101.119:5000/labels", {
+      const res = await fetch("http://148.230.85.247:7000/labels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newLabel }),
