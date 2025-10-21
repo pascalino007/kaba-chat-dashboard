@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
 
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://148.230.85.247:7000/users");
+        const res = await fetch("https://kaba-chat-api.kabatitude.com/users");
         const data = await res.json();
 
         // ✅ Convert senderName → name (keep same variable naming)
@@ -42,7 +42,7 @@ const Sidebar: React.FC = () => {
 
     const fetchLabels = async () => {
       try {
-        const res = await fetch("http://148.230.85.247:7000/labels");
+        const res = await fetch("https://kaba-chat-api.kabatitude.com/labels");
         const data = await res.json();
         setLabels(data);
       } catch (err) {
@@ -81,7 +81,7 @@ const Sidebar: React.FC = () => {
   const handleCreateLabel = async () => {
     if (!newLabel.trim()) return;
     try {
-      const res = await fetch("http://148.230.85.247:7000/labels", {
+      const res = await fetch("https://kaba-chat-api.kabatitude.com/labels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newLabel }),

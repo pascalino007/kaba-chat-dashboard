@@ -14,8 +14,8 @@ interface Message {
 }
 
 const CUSTOMER_SERVICE_ID =  92109474;
-const SOCKET_URL = "http://148.230.85.247:7000";
-const API_URL = "http://148.230.85.247:7000";
+const SOCKET_URL = "https://kaba-chat-api.kabatitude.com";
+const API_URL = "https://kaba-chat-api.kabatitude.com";
 
 const ChatPage: React.FC = () => {
   const router = useRouter();
