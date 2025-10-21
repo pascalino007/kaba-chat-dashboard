@@ -8,11 +8,10 @@ import { socket } from "@/lib/socket";
 const Sidebar: React.FC = () => {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [senders, setSenders] = useState<number[]>([]);
+  const [senders, setSenders] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeUserId, setActiveUserId] = useState<number | null>(null);
 
-  // NEW: Labels
   const [labels, setLabels] = useState<{ id: number; name: string }[]>([]);
   const [showLabels, setShowLabels] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -25,8 +24,15 @@ const Sidebar: React.FC = () => {
     const fetchUsers = async () => {
       try {
         const res = await fetch("http://148.230.85.247:7000/users");
-        const data: number[] = await res.json();
-        setSenders(data);
+        const data = await res.json();
+
+        // ✅ Convert senderName → name (keep same variable naming)
+        const formatted = data.map((item: any) => ({
+          id: item.id,
+          name: item.senderName || `User ${item.id}`,
+        }));
+
+        setSenders(formatted);
       } catch (err) {
         console.error("❌ Failed to load users:", err);
       } finally {
@@ -47,12 +53,15 @@ const Sidebar: React.FC = () => {
     fetchUsers();
     fetchLabels();
 
-    // Listen for new messages in real time
+    // 🔄 Listen for new messages
     socket.on("message", (message: any) => {
       if (message.receiverId === CUSTOMER_SERVICE_ID) {
         setSenders((prev) => {
-          if (!prev.includes(message.senderId)) {
-            return [message.senderId, ...prev];
+          if (!prev.find((s) => s.id === message.senderId)) {
+            return [
+              ...prev,
+              { id: message.senderId, name: message.senderName || `User ${message.senderId}` },
+            ];
           }
           return prev;
         });
@@ -88,7 +97,6 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="w-72 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-50 flex flex-col">
       <div className="p-4 border-b border-gray-200">
-        {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg text-black font-bold">Discussions</h2>
 
@@ -123,25 +131,25 @@ const Sidebar: React.FC = () => {
           <p className="text-gray-400 text-sm">No messages yet.</p>
         ) : (
           <ul className="space-y-2">
-            {senders.map((id) => (
+            {senders.map((user) => (
               <li
-                key={id}
-                onClick={() => handleSelectUser(id)}
+                key={user.id}
+                onClick={() => handleSelectUser(user.id)}
                 className={`flex items-center space-x-3 p-3 cursor-pointer rounded-lg transition ${
-                  activeUserId === id
+                  activeUserId === user.id
                     ? "bg-gray-200 font-semibold"
                     : "hover:bg-gray-100"
                 }`}
               >
                 <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-300 text-gray-700 font-bold">
-                  {id.toString().slice(-2)}
+                  {user.id.toString().slice(-2)}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-black font-medium truncate">
-                    User {id}
+                    {user.name}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">ID: {id}</p>
+                  <p className="text-xs text-gray-500 truncate">ID: {user.id}</p>
                 </div>
               </li>
             ))}

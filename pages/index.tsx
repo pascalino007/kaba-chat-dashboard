@@ -16,7 +16,7 @@ const Dashboard: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Your dashboard content */}
+        
       </div>
     </Layout>
   );
