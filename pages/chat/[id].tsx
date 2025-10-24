@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Layout from "../../components/layout/Layout";
 import { useRouter } from "next/router";
-import { Send, Image as ImageIcon } from "lucide-react";
+import { Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import io from "socket.io-client";
 import axios from "axios";
 
@@ -13,7 +13,7 @@ interface Message {
   createdAt?: string;
 }
 
-const CUSTOMER_SERVICE_ID =  92109474;
+const CUSTOMER_SERVICE_ID = 92109474;
 const SOCKET_URL = "https://kaba-chat-api.kabatitude.com";
 const API_URL = "https://kaba-chat-api.kabatitude.com";
 
@@ -25,6 +25,7 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const socketRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,15 +46,19 @@ const ChatPage: React.FC = () => {
       socket.emit("/register", CUSTOMER_SERVICE_ID);
     });
 
+    // Request previous messages
     socket.emit("/getMessages", {
       userId: CUSTOMER_SERVICE_ID,
       otherId: userId,
     });
 
+    // When we receive all messages
     socket.on("messages", (data: Message[]) => {
       setMessages(data);
+      setLoading(false); // ✅ stop loader once messages arrive
     });
 
+    // When we receive new individual message
     socket.on("message", (msg: Message) => {
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === msg.id);
@@ -112,97 +117,113 @@ const ChatPage: React.FC = () => {
     <Layout>
       <div className="flex flex-col h-screen ml-5">
         {/* Header */}
-        <div className="flex w-full px-6 py-4 border-b bg-white shadow-sm">
+        <div className="flex w-full px-6 py-4 border-b bg-white mx-0 my-0 shadow-sm">
           <h1 className="text-lg font-semibold text-gray-800">
             Discussion avec{" "}
             <span className="text-[#CD1F45]">Utilisateur {userId}</span>
           </h1>
         </div>
 
-        {/* Chat messages */}
-        <div className="flex-1 overflow-y-auto p-6 text-black bg-gray-50">
-          {messages.length === 0 ? (
-            <p className="text-gray-500">Aucun message pour le moment.</p>
-          ) : (
-            messages.map((msg, index) => {
-              const isCS = msg.senderId === CUSTOMER_SERVICE_ID;
-              const isImage = msg.text.startsWith("http");
-              const formattedDate = msg.createdAt
-                ? new Date(msg.createdAt).toLocaleString("fr-FR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "";
-
-              return (
-                <div
-                  key={index}
-                  className={`flex mb-3 ${isCS ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`px-4 py-2 rounded-2xl shadow ${
-                      isCS
-                        ? "bg-[#CD1F45] text-white rounded-br-none"
-                        : "bg-white text-gray-800 border rounded-bl-none"
-                    }`}
-                  >
-                    {isImage ? (
-                      <img
-                        src={msg.text}
-                        alt="Image"
-                        className="max-w-xs rounded-lg border"
-                      />
-                    ) : (
-                      <p>{msg.text}</p>
-                    )}
-                    <span className="text-xs opacity-70 block mt-1">
-                      {formattedDate}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input section */}
-        <div className="p-4 border-t bg-white">
-          <div className="flex items-center space-x-2">
-            {/* Image picker */}
-            <label className="cursor-pointer">
-              <ImageIcon className="w-6 h-6 text-gray-500 hover:text-[#CD1F45]" />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                }}
-              />
-            </label>
-
-            {/* Text input */}
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Écrire un message..."
-              className="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-[#CD1F45] focus:outline-none"
-            />
-
-            <button
-              onClick={handleSend}
-              className="bg-[#CD1F45] text-white p-3 rounded-full hover:bg-[#b01a3a] transition"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+        {/* Loading state */}
+        {loading ? (
+          <div className="flex flex-1 items-center justify-center bg-gray-50 text-gray-600">
+            <div className="flex flex-col items-center space-y-3">
+              <Loader2 className="w-8 h-8 animate-spin text-[#CD1F45]" />
+              <p className="text-sm font-medium">
+                Chargement des messages...
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Chat messages */}
+            <div className="flex-1 overflow-y-auto p-6 text-black bg-gray-50">
+              {messages.length === 0 ? (
+                <p className="text-gray-500">Aucun message pour le moment.</p>
+              ) : (
+                messages.map((msg, index) => {
+                  const isCS = msg.senderId === CUSTOMER_SERVICE_ID;
+                  const isImage = msg.text.startsWith("http");
+                  const formattedDate = msg.createdAt
+                    ? new Date(msg.createdAt).toLocaleString("fr-FR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "";
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex mb-3 ${
+                        isCS ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`px-4 py-2 rounded-2xl shadow ${
+                          isCS
+                            ? "bg-[#CD1F45] text-white rounded-br-none"
+                            : "bg-white text-gray-800 border rounded-bl-none"
+                        }`}
+                      >
+                        {isImage ? (
+                          <img
+                            src={msg.text}
+                            alt="Image"
+                            className="max-w-xs rounded-lg border"
+                          />
+                        ) : (
+                          <p>{msg.text}</p>
+                        )}
+                        <span className="text-xs opacity-70 block mt-1">
+                          {formattedDate}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input section */}
+            <div className="p-4 border-t bg-white">
+              <div className="flex items-center space-x-2">
+                {/* Image picker */}
+                <label className="cursor-pointer">
+                  <ImageIcon className="w-6 h-6 text-gray-500 hover:text-[#CD1F45]" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                  />
+                </label>
+
+                {/* Text input */}
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Écrire un message..."
+                  className="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-[#CD1F45] focus:outline-none"
+                />
+
+                <button
+                  onClick={handleSend}
+                  className="bg-[#CD1F45] text-white p-3 rounded-full hover:bg-[#b01a3a] transition"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Layout>
   );
